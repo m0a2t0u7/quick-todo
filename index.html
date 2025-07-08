@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家族用ToDoアプリ</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            min-height: 100vh; padding: 20px;
+        }
+        .container {
+            max-width: 800px; margin: 0 auto; background: white;
+            border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 25px;
+        }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #333; font-size: 2.5em; margin-bottom: 10px; }
+        .stats { color: #666; font-size: 1.1em; }
+        .section { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .section-title { font-weight: 600; color: #555; margin-bottom: 15px; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        .category-select, .task-input {
+            padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;
+        }
+        .task-input { flex: 1; }
+        .btn {
+            padding: 12px 16px; border: none; border-radius: 8px; cursor: pointer;
+            font-size: 14px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px;
+        }
+        .btn-primary { background: #2196f3; color: white; }
+        .btn-primary:hover { background: #1976d2; }
+        .btn-secondary { background: white; color: #666; border: 2px solid #ddd; }
+        .btn-secondary.active { background: #2196f3; color: white; border-color: #2196f3; }
+        .button-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        .task-list { display: flex; flex-direction: column; gap: 12px; }
+        .task-item {
+            background: white; border: 2px solid #e0e0e0; border-radius: 10px;
+            padding: 16px; display: flex; align-items: center; gap: 12px;
+        }
+        .task-checkbox {
+            width: 24px; height: 24px; border: 2px solid #ddd; border-radius: 50%;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .task-checkbox.completed { background: #4caf50; border-color: #4caf50; color: white; }
+        .task-content { flex: 1; display: flex; align-items: center; gap: 12px; }
+        .task-text { flex: 1; font-size: 15px; }
+        .task-text.completed { text-decoration: line-through; color: #999; }
+        .task-category { padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+        .category-general { background: #e0e0e0; color: #555; }
+        .category-work { background: #e3f2fd; color: #1976d2; }
+        .category-private { background: #e8f5e8; color: #388e3c; }
+        .category-shopping { background: #fff3e0; color: #f57c00; }
+        .category-study { background: #f3e5f5; color: #7b1fa2; }
+        .task-actions { display: flex; gap: 5px; }
+        .btn-icon {
+            width: 36px; height: 36px; border: none; border-radius: 8px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-edit { background: #e3f2fd; color: #1976d2; }
+        .btn-delete { background: #ffebee; color: #d32f2f; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        @media (max-width: 768px) {
+            .input-group { flex-direction: column; }
+            .button-group { gap: 6px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 家族用ToDoアプリ</h1>
+            <div class="stats" id="stats">すべて: 完了 0 / 0</div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🆕 新しいタスクを追加</div>
+            <div class="input-group">
+                <select class="category-select" id="categorySelect">
+                    <option value="一般">📋 一般</option>
+                    <option value="仕事">💼 仕事</option>
+                    <option value="プライベート">🏠 プライベート</option>
+                    <option value="買い物">🛒 買い物</option>
+                    <option value="勉強">📚 勉強</option>
+                </select>
+                <input type="text" class="task-input" id="taskInput"
+                       placeholder="タスクを入力（カンマ・スペース区切りで複数追加可能）" />
+                <button class="btn btn-primary" id="addBtn">➕ 追加</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🔍 フィルター設定</div>
+            <div style="margin-bottom: 15px;">
+                <div style="font-size: 12px; color: #666; margin-bottom: 8px;">カテゴリで絞り込み</div>
+                <div class="button-group" id="categoryButtons">
+                    <button class="btn btn-secondary active" data-category="すべて">🔍 すべて</button>
+                    <button class="btn btn-secondary" data-category="一般">📋 一般</button>
+                    <button class="btn btn-secondary" data-category="仕事">💼 仕事</button>
+                    <button class="btn btn-secondary" data-category="プライベート">🏠 プライベート</button>
+                    <button class="btn btn-secondary" data-category="買い物">🛒 買い物</button>
+                    <button class="btn btn-secondary" data-category="勉強">📚 勉強</button>
+                </div>
+            </div>
+            <div>
+                <div style="font-size: 12px; color: #666; margin-bottom: 8px;">表示オプション</div>
+                <button class="btn btn-secondary active" id="toggleCompleted">✅ 完了済みを表示</button>
+                <span id="hiddenCount" style="font-size: 14px; color: #999; margin-left: 10px;"></span>
+            </div>
+        </div>
+
+        <div class="task-list" id="taskList">
+            <div class="empty-state">
+                <h3>📝 まだタスクがありません</h3>
+                <p>上のフィールドからタスクを追加してください</p>
+                <p style="font-size: 0.8em; color: #bbb;">💡 ヒント: 「買い物,洗濯,掃除」のような区切りで複数追加できます</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let todos = [];
+        let selectedCategory = 'すべて';
+        let currentCategory = '一般';
+        let showCompleted = true;
+
+        function saveToStorage() {
+            try { localStorage.setItem('todos', JSON.stringify(todos)); } catch (e) {}
+        }
+
+        function loadFromStorage() {
+            try {
+                const saved = localStorage.getItem('todos');
+                if (saved) todos = JSON.parse(saved);
+            } catch (e) {}
+        }
+
+        function getCategoryClass(category) {
+            const map = {
+                '一般': 'category-general', '仕事': 'category-work',
+                'プライベート': 'category-private', '買い物': 'category-shopping', '勉強': 'category-study'
+            };
+            return map[category] || 'category-general';
+        }
+
+        function addTodo() {
+            const input = document.getElementById('taskInput');
+            const text = input.value.trim();
+            if (text === '') return;
+
+            const taskTexts = text.split(/[,，\s]+/).map(t => t.trim()).filter(t => t !== '');
+            taskTexts.forEach((taskText, index) => {
+                todos.push({
+                    id: Date.now() + index, text: taskText, completed: false, category: currentCategory
+                });
+            });
+
+            input.value = '';
+            saveToStorage();
+            render();
+        }
+
+        function toggleTodo(id) {
+            todos = todos.map(todo => todo.id === id ? { ...todo, completed: !todo.completed } : todo);
+            saveToStorage();
+            render();
+        }
+
+        function deleteTodo(id) {
+            todos = todos.filter(todo => todo.id !== id);
+            saveToStorage();
+            render();
+        }
+
+        function selectCategory(category) {
+            selectedCategory = category;
+            render();
+        }
+
+        function toggleShowCompleted() {
+            showCompleted = !showCompleted;
+            render();
+        }
+
+        function render() {
+            const filteredTodos = selectedCategory === 'すべて' ? todos : todos.filter(todo => todo.category === selectedCategory);
+            const displayTodos = showCompleted ? filteredTodos : filteredTodos.filter(todo => !todo.completed);
+            const completedCount = filteredTodos.filter(todo => todo.completed).length;
+            const totalCount = filteredTodos.length;
+
+            document.getElementById('stats').textContent = 
+                (selectedCategory === 'すべて' ? 'すべて' : selectedCategory) + ': 完了 ' + completedCount + ' / ' + totalCount;
+
+            document.querySelectorAll('#categoryButtons .btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.category === selectedCategory);
+            });
+
+            const toggleBtn = document.getElementById('toggleCompleted');
+            toggleBtn.classList.toggle('active', showCompleted);
+
+            const hiddenCount = document.getElementById('hiddenCount');
+            hiddenCount.textContent = !showCompleted && completedCount > 0 ? '(' + completedCount + '個の完了済みタスクを非表示)' : '';
+
+            const taskList = document.getElementById('taskList');
+            
+            if (displayTodos.length === 0) {
+                const message = !showCompleted && totalCount > 0 ? '🎉 未完了のタスクがありません！' :
+                              selectedCategory === 'すべて' ? '📝 まだタスクがありません' : '📝 「' + selectedCategory + '」のタスクがありません';
+                const content = !showCompleted && totalCount > 0 ? '<p>すべてのタスクが完了しています</p>' :
+                              '<p>上のフィールドからタスクを追加してください</p><p style="font-size: 0.8em; color: #bbb;">💡 ヒント: 「買い物,洗濯,掃除」のような区切りで複数追加できます</p>';
+                taskList.innerHTML = '<div class="empty-state"><h3>' + message + '</h3>' + content + '</div>';
+            } else {
+                taskList.innerHTML = displayTodos.map(todo => 
+                    '<div class="task-item">' +
+                        '<div class="task-checkbox ' + (todo.completed ? 'completed' : '') + '" onclick="toggleTodo(' + todo.id + ')">' +
+                            (todo.completed ? '✓' : '') +
+                        '</div>' +
+                        '<div class="task-content">' +
+                            '<div class="task-text ' + (todo.completed ? 'completed' : '') + '">' + todo.text + '</div>' +
+                            '<div class="task-category ' + getCategoryClass(todo.category) + '">' + todo.category + '</div>' +
+                        '</div>' +
+                        '<div class="task-actions">' +
+                            '<button class="btn-icon btn-delete" onclick="deleteTodo(' + todo.id + ')">🗑️</button>' +
+                        '</div>' +
+                    '</div>'
+                ).join('');
+            }
+        }
+
+        document.getElementById('addBtn').addEventListener('click', addTodo);
+        document.getElementById('taskInput').addEventListener('keypress', e => e.key === 'Enter' && addTodo());
+        document.getElementById('categorySelect').addEventListener('change', e => currentCategory = e.target.value);
+        document.querySelectorAll('#categoryButtons .btn').forEach(btn => 
+            btn.addEventListener('click', () => selectCategory(btn.dataset.category))
+        );
+        document.getElementById('toggleCompleted').addEventListener('click', toggleShowCompleted);
+
+        loadFromStorage();
+        render();
+    </script>
+</body>
+</html>
